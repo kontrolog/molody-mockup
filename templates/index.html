@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Etsy Necklace Mockup Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .preview-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .preview {
+            max-width: 80%;
+            margin-right: 10px;
+        }
+        .control-group {
+            margin-bottom: 10px;
+        }
+        #mockupContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Etsy Necklace Mockup Generator</h1>
+
+    <div class="control-group">
+        <label for="text">Text (multi-line supported):</label>
+        <textarea id="text" name="text" rows="3"></textarea>
+    </div>
+    <div class="control-group">
+        <label for="font">Font:</label>
+        <select id="font" name="font">
+            {% for font in fonts %}
+            <option value="{{ font }}">{{ font }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="control-group">
+        <label for="fontSize">Font Size:</label>
+        <input type="number" id="fontSize" name="fontSize" value="20" min="8" max="72">
+    </div>
+    <div class="control-group">
+        <label for="textAlign">Text Alignment:</label>
+        <select id="textAlign" name="textAlign">
+            <option value="center" selected>Center</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label for="horizontalOffset">Horizontal Offset:</label>
+        <input type="number" id="horizontalOffset" name="horizontalOffset" value="0" min="-500" max="500">
+    </div>
+    <div class="control-group">
+        <label for="verticalAlign">Vertical Alignment:</label>
+        <select id="verticalAlign" name="verticalAlign">
+            <option value="middle" selected>Middle</option>
+            <option value="top">Top</option>
+            <option value="bottom">Bottom</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label for="verticalOffset">Vertical Offset:</label>
+        <input type="number" id="verticalOffset" name="verticalOffset" value="0" min="-500" max="500">
+    </div>
+    <div class="control-group">
+        <label for="background">Background:</label>
+        <select id="background" name="background">
+            {% for bg in backgrounds %}
+            <option value="{{ bg }}">{{ bg }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="control-group">
+        <label for="vector">Vector Image:</label>
+        <select id="vector" name="vector">
+            <option value="">None</option>
+            {% for vec in vectors %}
+            <option value="{{ vec }}">{{ vec }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="control-group">
+        <label for="vectorScale">Vector Scale:</label>
+        <input type="number" id="vectorScale" name="vectorScale" value="1" min="0.1" max="10" step="0.1">
+    </div>
+    <div class="control-group">
+        <label for="vectorX">Vector X Position:</label>
+        <input type="number" id="vectorX" name="vectorX" value="0" min="0">
+    </div>
+    <div class="control-group">
+        <label for="vectorY">Vector Y Position:</label>
+        <input type="number" id="vectorY" name="vectorY" value="0" min="0">
+    </div>
+
+    <button onclick="generateMockup()">Generate Mockup</button>
+    <button onclick="mergeMockups()">Merge Selected Mockups</button>
+    <div id="mockupContainer"></div>
+
+    <script>
+        function generateMockup() {
+            const text = document.getElementById('text').value;
+            const font = document.getElementById('font').value;
+            const fontSize = document.getElementById('fontSize').value;
+            const background = document.getElementById('background').value;
+            const textAlign = document.getElementById('textAlign').value;
+            const verticalAlign = document.getElementById('verticalAlign').value;
+            const vector = document.getElementById('vector').value;
+            const vectorScale = document.getElementById('vectorScale').value;
+            const vectorX = document.getElementById('vectorX').value;
+            const vectorY = document.getElementById('vectorY').value;
+            const horizontalOffset = document.getElementById('horizontalOffset').value;
+            const verticalOffset = document.getElementById('verticalOffset').value;
+
+            fetch('/generate_mockup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    text, font, fontSize, background, 
+                    textAlign, verticalAlign,
+                    vector, vectorScale, vectorX, vectorY,
+                    horizontalOffset, verticalOffset
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const mockupContainer = document.getElementById('mockupContainer');
+                const previewContainer = document.createElement('div');
+                previewContainer.classList.add('preview-container');
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.classList.add('mockup-checkbox');
+
+                const newMockup = document.createElement('img');
+                newMockup.src = 'data:image/png;base64,' + data.image;
+                newMockup.classList.add('preview');
+
+                previewContainer.appendChild(checkbox);
+                previewContainer.appendChild(newMockup);
+                mockupContainer.prepend(previewContainer);
+            });
+        }
+
+        function mergeMockups() {
+            const selectedMockups = document.querySelectorAll('.mockup-checkbox:checked');
+            if (selectedMockups.length < 2) {
+                alert('Please select at least two mockups to merge.');
+                return;
+            }
+
+            const imagesToMerge = Array.from(selectedMockups).map(checkbox => 
+                checkbox.nextElementSibling.src.split(',')[1]
+            );
+
+            fetch('/merge_mockups', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ images: imagesToMerge }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const mockupContainer = document.getElementById('mockupContainer');
+                const previewContainer = document.createElement('div');
+                previewContainer.classList.add('preview-container');
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.classList.add('mockup-checkbox');
+
+                const mergedMockup = document.createElement('img');
+                mergedMockup.src = 'data:image/png;base64,' + data.merged_image;
+                mergedMockup.classList.add('preview');
+
+                previewContainer.appendChild(checkbox);
+                previewContainer.appendChild(mergedMockup);
+                mockupContainer.prepend(previewContainer);
+            });
+        }
+    </script>
+</body>
+</html>
