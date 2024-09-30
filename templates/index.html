@@ -20,6 +20,10 @@
             max-width: 80%;
             margin-right: 10px;
         }
+        .separator {
+            border-top: 2px solid black; /* Line style */
+            margin: 10px 0; /* Space above and below the line */
+        }
         .control-group {
             margin-bottom: 10px;
         }
@@ -151,6 +155,11 @@
                 previewContainer.appendChild(checkbox);
                 previewContainer.appendChild(newMockup);
                 mockupContainer.prepend(previewContainer);
+
+                // Add a separator line after the new mockup
+                const separator = document.createElement('div');
+                separator.className = 'separator';
+                mockupContainer.prepend(separator);
             });
         }
 
@@ -189,6 +198,11 @@
                 previewContainer.appendChild(checkbox);
                 previewContainer.appendChild(mergedMockup);
                 mockupContainer.prepend(previewContainer);
+
+                // Add a separator line after the merged mockup
+                const separator = document.createElement('div');
+                separator.className = 'separator';
+                mockupContainer.prepend(separator);
             });
         }
     </script>
