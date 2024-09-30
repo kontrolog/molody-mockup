@@ -48,6 +48,9 @@ def generate_mockup():
     horizontal_offset = int(data.get('horizontalOffset', 0))
     vertical_offset = int(data.get('verticalOffset', 0))
 
+    # Set line spacing (you can adjust this value as needed)
+    line_spacing = 10  # Space between lines
+
     # Load background image
     bg_image = Image.open(os.path.join(BACKGROUND_FOLDER, background))
 
@@ -60,7 +63,7 @@ def generate_mockup():
     # Calculate text dimensions
     line_sizes = [font.getbbox(line) for line in text_lines]
     max_width = max(bbox[2] - bbox[0] for bbox in line_sizes)
-    total_height = sum(bbox[3] - bbox[1] for bbox in line_sizes)
+    total_height = sum(bbox[3] - bbox[1] for bbox in line_sizes) + (len(text_lines) - 1) * line_spacing
 
     # Calculate initial text position
     if text_align == 'left':
@@ -91,7 +94,7 @@ def generate_mockup():
             line_x = x
 
         draw.text((line_x, y), line, font=font, fill=(0, 0, 0))  # Black text
-        y += line_height
+        y += line_height + line_spacing  # Add line spacing after each line
 
     # Add vector if specified
     if vector:
