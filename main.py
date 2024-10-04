@@ -19,37 +19,30 @@ for folder in [FONT_FOLDER, BACKGROUND_FOLDER, VECTOR_FOLDER]:
 def get_fonts():
     return [f for f in os.listdir(FONT_FOLDER) if f.endswith(('.otf', '.ttf'))]
 
+
 def get_backgrounds():
-    return [f for f in os.listdir(BACKGROUND_FOLDER) if f.endswith(('.jpg', '.png'))]
+    return [f for f in os.listdir(
+        BACKGROUND_FOLDER) if f.endswith(('.jpg', '.png'))]
+
 
 def get_vectors():
     return [f for f in os.listdir(VECTOR_FOLDER) if f.endswith('.png')]
+
 
 @app.route('/')
 def index():
     fonts = get_fonts()
     backgrounds = get_backgrounds()
     vectors = get_vectors()
-    return render_template('index.html', fonts=fonts, backgrounds=backgrounds, vectors=vectors)
+    return render_template(
+        'index.html', fonts=fonts, backgrounds=backgrounds, vectors=vectors)
+
 
 @app.route('/generate_mockup', methods=['POST'])
 def generate_mockup():
     data = request.json
-    text_lines = data['text'].split('\n')
-    font_name = data['font']
-    font_size = int(data['fontSize'])
+    print("Data received:", data)  # Print the received data for debugging
     background = data['background']
-    text_align = data['textAlign']
-    vertical_align = data['verticalAlign']
-    vector = data.get('vector')
-    vector_scale = float(data.get('vectorScale', 1))
-    vector_x = int(data.get('vectorX', 0))
-    vector_y = int(data.get('vectorY', 0))
-    horizontal_offset = int(data.get('horizontalOffset', 0))
-    vertical_offset = int(data.get('verticalOffset', 0))
-
-    # Set line spacing (you can adjust this value as needed)
-    line_spacing = 10  # Space between lines
 
     # Load background image
     bg_image = Image.open(os.path.join(BACKGROUND_FOLDER, background))
@@ -57,65 +50,84 @@ def generate_mockup():
     # Create a drawing object
     draw = ImageDraw.Draw(bg_image)
 
-    # Load font
-    font = ImageFont.truetype(os.path.join(FONT_FOLDER, font_name), font_size)
+    y = 10  # Initial vertical position for the first font
 
-    # Calculate text dimensions
-    line_sizes = [font.getbbox(line) for line in text_lines]
-    max_width = max(bbox[2] - bbox[0] for bbox in line_sizes)
-    total_height = sum(bbox[3] - bbox[1] for bbox in line_sizes) + (len(text_lines) - 1) * line_spacing
+    for font_data in data['fonts']:
+        font_name = font_data['font']
+        font_size = int(font_data['fontSize'])
+        horizontal_offset = int(font_data.get('horizontalOffset', 0))
+        vertical_offset = int(font_data.get('verticalOffset', 0))
+        text_align = font_data.get('textAlign', 'left')
+        vertical_align = font_data.get('verticalAlign', 'top')
+        text_lines = font_data['text'].split(
+            '\n')  # Get text for this font and split into lines
 
-    # Calculate initial text position
-    if text_align == 'left':
-        x = 10 + horizontal_offset
-    elif text_align == 'center':
-        x = (bg_image.width - max_width) / 2 + horizontal_offset
-    else:  # right
-        x = bg_image.width - max_width - 10 + horizontal_offset
+        # Set line spacing
+        line_spacing = 10
 
-    if vertical_align == 'top':
-        y = 10 + vertical_offset
-    elif vertical_align == 'middle':
-        y = (bg_image.height - total_height) / 2 + vertical_offset
-    else:  # bottom
-        y = bg_image.height - total_height - 10 + vertical_offset
+        # Load font
+        font = ImageFont.truetype(os.path.join(
+            FONT_FOLDER, font_name), font_size)
 
-    # Draw text on image
-    for i, line in enumerate(text_lines):
-        bbox = line_sizes[i]
-        line_width = bbox[2] - bbox[0]
-        line_height = bbox[3] - bbox[1]
+        # Calculate total text block height for this font
+        total_font_height = 0
+        line_heights = []
+        for line in text_lines:
+            bbox = font.getbbox(line)
+            line_height = bbox[3] - bbox[1]
+            line_heights.append(line_height)
+            total_font_height += line_height + line_spacing
 
-        if text_align == 'center':
-            line_x = x + (max_width - line_width) / 2
-        elif text_align == 'right':
-            line_x = x + max_width - line_width
-        else:  # left
-            line_x = x
+        total_font_height -= line_spacing  # Remove extra spacing
 
-        draw.text((line_x, y), line, font=font, fill=(0, 0, 0))  # Black text
-        y += line_height + line_spacing  # Add line spacing after each line
+        # Adjust y for vertical alignment of the text block
+        if vertical_align == 'top':
+            y += vertical_offset
+        elif vertical_align == 'middle':
+            y = (bg_image.height - total_font_height) / 2 + vertical_offset
+        elif vertical_align == 'bottom':
+            y = bg_image.height - total_font_height - 10 + vertical_offset
 
-    # Add vector if specified
-    if vector:
-        vector_path = os.path.join(VECTOR_FOLDER, vector)
-        vector_image = Image.open(vector_path)
+        # Draw each line of text for this font
+        for i, line in enumerate(text_lines):
+            line_width = font.getbbox(line)[2]
+            if text_align == 'left':
+                x = 10 + horizontal_offset
+            elif text_align == 'center':
+                x = (bg_image.width -
+                     line_width) / 2 + horizontal_offset
+            else:  # right
+                x = bg_image.width - line_width - 10 + horizontal_offset
+            draw.text((x, y), line, font=font, fill=(0, 0, 0))
+            y += line_heights[i] + line_spacing
 
-        # Resize vector image
-        new_size = (int(vector_image.width * vector_scale), int(vector_image.height * vector_scale))
-        vector_image = vector_image.resize(new_size, Image.LANCZOS)
+        # Move y down for the next font (only if not bottom aligned)
+        if vertical_align != 'bottom':
+            y += vertical_offset
 
-        # Paste vector image onto background
-        bg_image.paste(vector_image, (vector_x, vector_y), vector_image)
+    # Add vectors (same as before)
+    for vector_data in data['vectors']:
+        vector = vector_data.get('vector')
+        if vector:
+            vector_scale = float(vector_data.get('vectorScale', 1))
+            vector_x = int(vector_data.get('vectorX', 0))
+            vector_y = int(vector_data.get('vectorY', 0))
+            vector_path = os.path.join(VECTOR_FOLDER, vector)
+            vector_image = Image.open(vector_path)
 
-    # Save the image to a bytes buffer
+            new_size = (int(vector_image.width * vector_scale),
+                        int(vector_image.height * vector_scale))
+            vector_image = vector_image.resize(new_size, Image.LANCZOS)
+
+            bg_image.paste(vector_image, (vector_x, vector_y), vector_image)
+
+    # Save and encode the image
     buffered = io.BytesIO()
     bg_image.save(buffered, format="PNG")
-
-    # Encode the image to base64
     img_str = base64.b64encode(buffered.getvalue()).decode()
 
     return jsonify({'image': img_str})
+
 
 @app.route('/merge_mockups', methods=['POST'])
 def merge_mockups():
@@ -123,7 +135,8 @@ def merge_mockups():
     images_base64 = data['images']
 
     # Decode the base64 images into PIL Image objects
-    images = [Image.open(io.BytesIO(base64.b64decode(img))) for img in images_base64]
+    images = [Image.open(io.BytesIO(base64.b64decode(
+        img))) for img in images_base64]
 
     # Assume all images have the same size, get the size of the first image
     width, height = images[0].size
@@ -144,5 +157,6 @@ def merge_mockups():
 
     return jsonify({'merged_image': merged_img_str})
 
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=8080, debug=True)
