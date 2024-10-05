@@ -32,13 +32,12 @@
       display: inline-block;
       margin-bottom: 5px;
       color: #555;
-      width: 80px;
     }
 
     input[type="text"],
     select,
     textarea {
-      width: calc(100% - 90px);
+      width: 100%;
       padding: 10px;
       margin-bottom: 10px;
       border: 1px solid #ddd;
@@ -49,7 +48,7 @@
     /* Offset inputlarının genişliğini sınırla */
     input[type="number"][id^="horizontalOffset"],
     input[type="number"][id^="verticalOffset"] {
-      max-width: 60px; /* 3 basamaklı sayılar için yeterli */
+      max-width: 60px; 
     }
 
     textarea {
@@ -60,7 +59,16 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap; /* Eklenen satır */
       margin-bottom: 15px;
+    }
+
+    .input-group > label {
+      flex: 0 0 80px; /* Etiket genişliği */
+    }
+
+    .input-group > input, .input-group > select {
+      flex: 1 1 auto; /* Giriş alanları kalan alanı kaplar */
     }
 
     .align-controls {
@@ -68,6 +76,7 @@
       justify-content: space-between;
       gap: 10px;
       margin-bottom: 15px;
+      flex-wrap: wrap; /* Eklenen satır */
     }
 
     .font-vector-container {
@@ -111,9 +120,10 @@
       margin-bottom: 10px;
     }
 
+    /* Checkbox'ın her zaman görünür olmasını sağla */
     .preview-item input[type="checkbox"] {
+      flex: 0 0 20px; /* Checkbox için sabit genişlik */
       margin-right: 10px;
-      align-self: center;
     }
 
     .preview {
