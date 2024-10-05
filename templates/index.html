@@ -102,6 +102,38 @@
     }
 
     /* ... diğer stiller ... */
+    /* ... diğer CSS stilleri ... */
+
+    .input-group > label[for^="fontSize"] {
+      width: 40px; /* Size etiketinin genişliğini azalt */
+    }
+
+    /* Size inputunun genişliğini sınırla */
+    input[type="number"][id^="fontSize"] {
+      max-width: 40px; /* Alan genişliğini azalt */
+    }
+
+    /* ... diğer CSS stilleri ... */
+    /* ... diğer CSS stilleri ... */
+
+    .preview-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #b08968; /* Kahverengi çizgi ekle */
+      padding-bottom: 10px; /* Çizgi ile mockup arasına boşluk ekle */
+    }
+
+    .input-group > label[for^="horizontalOffset"],
+    .input-group > label[for^="verticalOffset"] {
+      width: 70px; /* Etiket genişliğini azalt */
+    }
+
+    /* Offset inputlarının genişliğini sınırla */
+    input[type="number"][id^="horizontalOffset"],
+    input[type="number"][id^="verticalOffset"] {
+      max-width: 50px; /* Alan genişliğini azalt */
+    }
 
     .font-vector-container {
       border: 1px solid #ddd;
