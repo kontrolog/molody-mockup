@@ -46,6 +46,12 @@
       box-sizing: border-box;
     }
 
+    /* Offset inputlarının genişliğini sınırla */
+    input[type="number"][id^="horizontalOffset"],
+    input[type="number"][id^="verticalOffset"] {
+      max-width: 60px; /* 3 basamaklı sayılar için yeterli */
+    }
+
     textarea {
       resize: vertical;
     }
